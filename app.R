@@ -54,7 +54,7 @@ trib_waters<-st_read("shapefiles/del_trib_waters.shp")
 ###############################################################################
 ### Read in each trib shapefile ###
 pennsuaken<-st_read("shapefiles/penn_hucs.shp")
-rancocas<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "RancocasHUCsfinal")
+rancocas<-st_read("RancocasHUCsfinal.shp")
 raccoon<-st_read("shapefiles/Raccoon.shp")
 blackscrosswicks<-st_read("shapefiles/BlacksCrosswicksHUCsfinal.shp")
 tribs_merged<-st_read("shapefiles/tribs_merge.shp")
