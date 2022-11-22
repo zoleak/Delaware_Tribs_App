@@ -1,6 +1,5 @@
 ### App for Delaware Tribs Project ###
 ### Author: Kevin Zolea ###
-### Year: 2019 ###
 ###############################################################################
 ### Download necessary packages ###
 if (!require(pacman)) {
@@ -19,7 +18,7 @@ del_trib_data<-read_csv("results.csv",col_names = T)%>%
   dplyr::filter(!val == "NA")
 ###############################################################################
 ### Read in flow stations shapefile ###
-USGS_flow_stations<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "USGS_Flow_Stations_KMZ")
+#USGS_flow_stations<-st_read("shapefiles/USGS_Flow_Stations_KMZ.shp")
 ###############################################################################
 ### Read in 2018 water quality stations excel spreadsheet ###
 wq_stations<-read_xlsx("Stations_Lookup_051319.xlsx",col_names = T)
@@ -51,14 +50,14 @@ del_trib_wq_stations<-del_trib_wq_stations%>%
 #NJ_huc14s<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "2014_NJ_Integrated_Report_AU")
 ###############################################################################
 ### Read in water shapefile ###
-trib_waters<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "del_trib_waters")
+trib_waters<-st_read("shapefiles/del_trib_waters.shp")
 ###############################################################################
 ### Read in each trib shapefile ###
-pennsuaken<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "penn_hucs")
+pennsuaken<-st_read("shapefiles/penn_hucs.shp")
 rancocas<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "RancocasHUCsfinal")
-raccoon<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "Raccoon")
-blackscrosswicks<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "BlacksCrosswicksHUCsfinal")
-tribs_merged<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "tribs_merge")
+raccoon<-st_read("shapefiles/Raccoon.shp")
+blackscrosswicks<-st_read("shapefiles/BlacksCrosswicksHUCsfinal.shp")
+tribs_merged<-st_read("shapefiles/tribs_merge.shp")
 ### Do same thing as above to get trib name column for tribs_merged shapefile to be able to zoom to trib based on drop down for plots ###
 tribs_merged<-tribs_merged%>%
   dplyr::mutate(HUC14 = as.character(HUC14))%>%
@@ -79,7 +78,7 @@ tribs_merged<-tribs_merged%>%
                         TRUE ~ HUC14)) 
 ###############################################################################
 ### Change projections to work with leaflet map ###
-USGS_flow_stations<-st_transform(USGS_flow_stations, crs="+init=epsg:4326")
+#USGS_flow_stations<-st_transform(USGS_flow_stations, crs="+init=epsg:4326")
 pennsuaken<-st_transform(pennsuaken, crs="+init=epsg:4326")
 rancocas<-st_transform(rancocas, crs="+init=epsg:4326")
 raccoon<-st_transform(raccoon, crs="+init=epsg:4326")
@@ -101,7 +100,7 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                           div(class= "outer",
                               tags$head(
                                 #includeCSS("/Users/kevinzolea/Desktop/Temp_Impairments/www/styles.css")),
-                                includeCSS("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/www/styles.css")),
+                                includeCSS("www/styles.css")),
                               h1(""),
                               h2("Introduction:"),
                               h3("The purpose of this app is to help guide decision making for the modeling efforts in the Delaware Tributaries Project. It
@@ -208,8 +207,8 @@ server <- function(input, output,session) {
                   layerId = ~ blackscrosswicks$HUC14)%>%
       addPolygons(data = trib_waters,color = "blue",weight = 1,smoothFactor = 1,
                   opacity = 0, fillOpacity = 1)%>%
-      addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
-                 popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
+      #addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
+      #           popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
       addMarkers(data = del_trib_wq_stations,lng = ~LongDeg,lat = ~LatDeg, group = "WQ Stations",
                  popup = ~paste("<h4> Station:</h4>",locid,sep = ""),
                  clusterOptions = markerClusterOptions())%>%
@@ -324,8 +323,8 @@ server <- function(input, output,session) {
                   layerId = ~ blackscrosswicks$HUC14)%>%
       addPolygons(data = trib_waters,color = "blue",weight = 1,smoothFactor = 1,
                   opacity = 0, fillOpacity = 1)%>%
-      addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
-                 popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
+      #addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
+       #          popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
       addLayersControl(
         baseGroups = c("Satellite (Default)", "Grey", "OSM"),
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
