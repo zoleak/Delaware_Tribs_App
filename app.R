@@ -47,14 +47,14 @@ del_trib_wq_stations<-del_trib_wq_stations%>%
                         TRUE ~ HUC14)) 
 ###############################################################################
 ### Read in HUC14s of NJ shapefile ###
-#NJ_huc14s<-st_read("V:/lum/WM&S/BEAR (Bureau of Environmental Analysis and Restoration)/Envpln/Hourly Employees/KevinZolea/4tribinfo/Del_Tribs_Project/del_tribs_app/shapefiles",layer = "2014_NJ_Integrated_Report_AU")
+NJ_huc14s<-st_read("shapefiles/2014_NJ_Integrated_Report_AU.shp")
 ###############################################################################
 ### Read in water shapefile ###
 trib_waters<-st_read("shapefiles/del_trib_waters.shp")
 ###############################################################################
 ### Read in each trib shapefile ###
 pennsuaken<-st_read("shapefiles/penn_hucs.shp")
-rancocas<-st_read("RancocasHUCsfinal.shp")
+rancocas<-st_read("shapefiles/RancocasHUCsfinal.shp")
 raccoon<-st_read("shapefiles/Raccoon.shp")
 blackscrosswicks<-st_read("shapefiles/BlacksCrosswicksHUCsfinal.shp")
 tribs_merged<-st_read("shapefiles/tribs_merge.shp")
@@ -79,6 +79,8 @@ tribs_merged<-tribs_merged%>%
 ###############################################################################
 ### Change projections to work with leaflet map ###
 #USGS_flow_stations<-st_transform(USGS_flow_stations, crs="+init=epsg:4326")
+NJ_huc14s<-st_transform(NJ_huc14s, crs="+init=epsg:4326")
+NJ_huc14s <- st_zm(NJ_huc14s, drop = T, what = "ZM")
 pennsuaken<-st_transform(pennsuaken, crs="+init=epsg:4326")
 rancocas<-st_transform(rancocas, crs="+init=epsg:4326")
 raccoon<-st_transform(raccoon, crs="+init=epsg:4326")
@@ -170,13 +172,13 @@ server <- function(input, output,session) {
       addTiles(group = "OSM") %>%
       addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = "Grey") %>%
       setView(lng = -74.4 ,lat =40, zoom = 10)%>%
-      #addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
-      #            opacity = 1, fillOpacity = 0,stroke = T,color = "black",
-      #            group = "HUC14s",
-      #            highlightOptions = highlightOptions(color = "blue",
-      #                                                weight = 2,bringToFront = TRUE),
-      #            label = ~ paste0("HUC14 #:",HUC14TXT,sep = ","),
-      #            layerId = ~ NJ_huc14s$HUC14TXT)%>%
+      addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
+                  opacity = 1, fillOpacity = 0,stroke = T,color = "black",
+                  group = "HUC14s",
+                  highlightOptions = highlightOptions(color = "blue",
+                                                      weight = 2,bringToFront = TRUE),
+                  label = ~ paste0("HUC14 #:",HUC14TXT,sep = ","),
+                  layerId = ~ NJ_huc14s$HUC14TXT)%>%
       addPolygons(data = raccoon,weight = 1,smoothFactor = 1,
                   opacity = 1, fillOpacity = 0.4,
                   group = "Raccoon",stroke = T,color = "#f442e8",
@@ -232,7 +234,7 @@ server <- function(input, output,session) {
 #                   choices = unique(datasub()$HUC14),
 #                   selected = unique(datasub()$HUC14[1]))
 #  })
-  
+# 
 #  datasub2<-reactive({
 #    foo<-subset(datasub(),HUC14 == input$huc_input)
 #    return(foo)
@@ -284,13 +286,13 @@ server <- function(input, output,session) {
       addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = "Grey") %>%
       addProviderTiles(providers$Esri.WorldImagery, group = "Satellite (Default)") %>%
       setView(lng = -74.4 ,lat =40, zoom = 7)%>%
-      #addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
-      #            opacity = 1, fillOpacity = 0,stroke = T,color = "black",
-      #            group = "HUC14s",
-      #            highlightOptions = highlightOptions(color = "blue",
-      #                                                weight = 2,bringToFront = TRUE),
-      #            label = ~ paste0("HUC14 #:",HUC14TXT,sep = ","),
-      #            layerId = ~ NJ_huc14s$HUC14TXT)%>%
+      addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
+                  opacity = 1, fillOpacity = 0,stroke = T,color = "black",
+                  group = "HUC14s",
+                  highlightOptions = highlightOptions(color = "blue",
+                                                      weight = 2,bringToFront = TRUE),
+                  label = ~ paste0("HUC14 #:",HUC14TXT,sep = ","),
+                  layerId = ~ NJ_huc14s$HUC14TXT)%>%
       addPolygons(data = tribs_merged,color = "blue",weight = 1,smoothFactor = 0,
                   opacity = 0, fillOpacity = 0)%>%
       addPolygons(data = raccoon,weight = 1,smoothFactor = 1,
@@ -326,7 +328,7 @@ server <- function(input, output,session) {
       #addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
        #          popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
       addLayersControl(
-        baseGroups = c("Satellite (Default)", "Grey", "OSM"),
+        baseGroups = c("Satellite (Default)", "Grey"),
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
                           "USGS Flow Stations","WQ Stations"),
         options = layersControlOptions(collapsed = FALSE))
