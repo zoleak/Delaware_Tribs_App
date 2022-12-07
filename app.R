@@ -2,17 +2,46 @@
 ### Author: Kevin Zolea ###
 ###############################################################################
 ### Download necessary packages ###
-if (!require(pacman)) {
-  install.packages('pacman')
-  
-}
-
-pacman::p_load("ggplot2","tidyr","plyr","dplyr","readxl","shinycssloaders",
-               "readr","cowplot","lubridate","scales","shinythemes","plotly",
-               "stringr","data.table","rlang","purrr","rmapshaper",
-               "shiny","DT","leaflet","sf","shinyWidgets",
-               "rsconnect","shinyjs","htmltools","htmlwidgets","leaflet.extras","readr")
+### uncomment if packages aren't installed already###
+#if (!require(pacman)) {
+#  install.packages('pacman')
+#  
+#}
+#
+#pacman::p_load("ggplot2","tidyr","plyr","dplyr","readxl","shinycssloaders",
+#               "readr","cowplot","lubridate","scales","shinythemes","plotly",
+#               "stringr","data.table","rlang","purrr","rmapshaper",
+#               "shiny","DT","leaflet","sf","shinyWidgets",
+#               "rsconnect","shinyjs","htmltools","htmlwidgets","leaflet.extras","readr")
 ###############################################################################
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(plyr)
+library(readxl)
+library(shinycssloaders)
+library(readr)
+library(cowplot)
+library(lubridate)
+library(scales)
+library(shinythemes)
+library(plotly)
+library(stringr)
+library(data.table)
+library(rlang)
+library(purrr)
+library(rmapshaper)
+library(shiny)
+library(shinydashboard)
+library(DT)
+library(leaflet)
+library(sf)
+library(shinyWidgets)
+library(shinyjs)
+library(htmltools)
+library(htmlwidgets)
+library(leaflet.extras)
+library(readr)
 ### Read in data ###
 del_trib_data<-read_csv("results.csv",col_names = T)%>%
   dplyr::filter(!val == "NA")
@@ -105,11 +134,12 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                                 includeCSS("www/styles.css")),
                               h1(""),
                               h2("Introduction:"),
-                              h3("The purpose of this app is to help guide decision making for the modeling efforts in the Delaware Tributaries Project. It
-                                 will give users the ability to understand the current data we have and the monitoring stations where the data is collected. This in turn
-                                 will provide useful information for the modelers of this project. The models developed through this project
-                                 will provide the useful loading information from upstream nontidal portions of the waterbodies into the tidal
-                                 portions and will allow development of site-specifc criteria if necessary."),
+                              h3("The goal of this app is to aid in decision making for the Delaware Tributaries Project's 
+                                 modeling efforts. It will enable users to comprehend the current data we have and the 
+                                 monitoring stations from which the data is collected. This, in turn, will provide useful 
+                                 information for the project's modelers. The models developed in this project will provide 
+                                 useful loading information from upstream nontidal portions of the waterbodies into the 
+                                 tidal portions, as well as the ability to develop site-specific criteria if necessary."),
                               br(),
                               HTML('<center><img src="http://media.nj.com/centraljersey_impact/photo/9558763-large.jpg"></center>')),
                           tags$head(tags$script(HTML('
@@ -128,6 +158,9 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                           DT::dataTableOutput("data")%>%
                             withSpinner(type = 5, color = "blue")),
                  tabPanel("Map",
+                          h1("The map below depicts the locations of the water quality 
+                          stations used to collect data for this study, as well as the 
+                          four tributary study regions and their respective HUC 14s."),
                           leafletOutput("del_trib_map", height = "95vh")%>%
                             withSpinner(type = 5, color = "blue")),
                  tabPanel("Plots",
@@ -168,9 +201,6 @@ server <- function(input, output,session) {
     leaflet(options = leafletOptions(minZoom = 7))%>%
       addTiles()%>%
       addResetMapButton()%>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite (Default)") %>%
-      addTiles(group = "OSM") %>%
-      addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = "Grey") %>%
       setView(lng = -74.4 ,lat =40, zoom = 10)%>%
       addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
                   opacity = 1, fillOpacity = 0,stroke = T,color = "black",
@@ -215,9 +245,8 @@ server <- function(input, output,session) {
                  popup = ~paste("<h4> Station:</h4>",locid,sep = ""),
                  clusterOptions = markerClusterOptions())%>%
       addLayersControl(
-        baseGroups = c("Satellite (Default)", "Grey", "OSM"),
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
-                          "USGS Flow Stations","WQ Stations"),
+                          "WQ Stations"),
         options = layersControlOptions(collapsed = FALSE))
     
   })
@@ -283,8 +312,6 @@ server <- function(input, output,session) {
     leaflet(options = leafletOptions(minZoom = 7))%>%
       addTiles()%>%
       addResetMapButton()%>%
-      addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = "Grey") %>%
-      addProviderTiles(providers$Esri.WorldImagery, group = "Satellite (Default)") %>%
       setView(lng = -74.4 ,lat =40, zoom = 7)%>%
       addPolygons(data = NJ_huc14s,weight = 1,smoothFactor = 1,
                   opacity = 1, fillOpacity = 0,stroke = T,color = "black",
@@ -328,9 +355,8 @@ server <- function(input, output,session) {
       #addMarkers(data = USGS_flow_stations, group = "USGS Flow Stations",
        #          popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
       addLayersControl(
-        baseGroups = c("Satellite (Default)", "Grey"),
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
-                          "USGS Flow Stations","WQ Stations"),
+                          "WQ Stations"),
         options = layersControlOptions(collapsed = FALSE))
   
   })
