@@ -171,9 +171,9 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                                                         style = "color:white;font-weight: bold;font-size:1.3em;"),
                                                         choices =c("Pennsauken","Raccoon","Rancocas","BlacksCrosswicks"),
                                                         selected = ""),
-                                         #uiOutput("huc"),
                                          uiOutput("parameter"),
-                                         HTML("<font color = 'white'>Author: Kevin Zolea\n (kevin.zolea@dep.nj.gov)</font>")),
+                                         uiOutput("locid"),
+                                        HTML("<font color = 'white'>Author: Kevin Zolea\n (kevin.zolea@dep.nj.gov)</font>")),
                             mainPanel(plotlyOutput("plot1")%>%withSpinner(type = 5, color = "blue"),
                                       leafletOutput("map2")%>%withSpinner(type = 5, color = "blue")))))
 ###############################################################################
@@ -256,20 +256,7 @@ server <- function(input, output,session) {
        foo <- subset(del_trib_data, Trib == input$trib_info)
        return(foo)
      })
-  
 ### Drop down menu updates based on input from trib drop down ###
-#  output$huc<-renderUI({
-#    selectizeInput("huc_input",label = strong("Select HUC14:",style = "color:white;font-weight: bold;font-size:1.3em;"),
-#                   choices = unique(datasub()$HUC14),
-#                   selected = unique(datasub()$HUC14[1]))
-#  })
-# 
-#  datasub2<-reactive({
-#    foo<-subset(datasub(),HUC14 == input$huc_input)
-#    return(foo)
-#  })
-  
-### Drop down menu updates based on input from huc drop down ###
   output$parameter<-renderUI({
     selectizeInput("parameter_input",label = strong("Select Parameter:",style = "color:white;font-weight: bold;font-size:1.3em;"),
                    choices = unique(datasub()$parameter),
@@ -281,13 +268,27 @@ server <- function(input, output,session) {
     return(foo)
     
   })
+###############################################################################
+  ### Drop down menu updates based on input from trib drop down ###
+    output$locid<-renderUI({
+      selectizeInput("locid",label = strong("Select Monitoring Station:",
+                              style = "color:white;font-weight: bold;font-size:1.3em;"),
+                     multiple = TRUE,
+                     choices = unique(datasub2()$locid),
+                     selected = unique(datasub2()$locid[1]))
+    })
+   
+    datasub3<-reactive({
+      foo<-subset(datasub2(),locid == input$locid)
+      return(foo)
+    })
 ###############################################################################  
 ### Now create plot based on drop downs!!! ###
   output$plot1<-renderPlotly({
     req(input$trib_info)
-    #req(input$huc_input)
     req(input$parameter_input)
-    p<-ggplot(data = datasub2(),aes(x=ActivityStartDate,y=val,group=1,
+    req(input$locid)
+    p<-ggplot(data = datasub3(),aes(x=ActivityStartDate,y=val,group=1,
                                     text = paste("Date:",ActivityStartDate,
                                                  "<br>Value:",val,
                                                  "<br>Station:",locid)))+
@@ -309,6 +310,9 @@ server <- function(input, output,session) {
 ###############################################################################  
 ### Creates map under plot to see where each huc is ###
   output$map2<-renderLeaflet({
+    req(input$trib_info)
+    req(input$parameter_input)
+    req(input$locid)
     leaflet(options = leafletOptions(minZoom = 7))%>%
       addTiles()%>%
       addResetMapButton()%>%
