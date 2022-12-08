@@ -127,6 +127,11 @@ tribs_merged<-st_transform(tribs_merged, crs="+init=epsg:4326")%>%
 ### Define UI for application ###
 ui <- navbarPage(theme = shinytheme("yeti"),
                  tags$b("NJDEP Delaware Tribs Project"),
+                 ###### Here : insert shinydashboard dependencies ######
+                 header = tagList(
+                   useShinydashboard()
+                 ),
+                 #######################################################
                  tabPanel("About App",
                           div(class= "outer",
                               tags$head(
@@ -155,6 +160,10 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                                                      ')))),
                  tabPanel("Data",
                           downloadButton('downloadData','Download Data'),
+                          infoBox("Total # of Monitoring Stations:",length(unique(del_trib_data$locid)),
+                                  color = "gray",icon = icon("map-marker")),
+                          infoBox("Total # of Parameters:",length(unique(del_trib_data$parameter)),
+                                  color = "gray",icon = icon("water")),
                           DT::dataTableOutput("data")%>%
                             withSpinner(type = 5, color = "blue")),
                  tabPanel("Map",
@@ -294,13 +303,12 @@ server <- function(input, output,session) {
                                                  "<br>Value:",val,
                                                  "<br>Station:",locid)))+
       geom_point(aes(color = locid),size=1.3)+
-      guides(color = guide_legend(title = "Monitoring Station"))+
-      labs(x="Date",y=input$parameter_input,
-           title = paste0(input$parameter_input," In ",input$trib_info," Tributary",collapse = ""))+
-      theme(plot.title = element_text(hjust = 0.5,face = "bold"),
-        legend.title = element_blank())+
-      theme_classic()
-      
+      labs(x="Date",y=input$parameter_input,col="Monitoring Station",
+           title = paste0(input$parameter_input," in ",input$trib_info," Tributary",collapse = ""))+
+      theme_classic()+
+      theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+    
     ### Converts ggplot object into plotly object ###
     ggplotly(p,dynamicTicks = "x",tooltip = "text")#%>%
       #add_annotations(text = "Station:",xref="paper", yref="paper",
