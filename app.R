@@ -246,7 +246,7 @@ server <- function(input, output,session) {
                  clusterOptions = markerClusterOptions())%>%
       addLayersControl(
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
-                          "WQ Stations"),
+                          "Monitoring Stations"),
         options = layersControlOptions(collapsed = FALSE))
     
   })
@@ -258,7 +258,8 @@ server <- function(input, output,session) {
      })
 ### Drop down menu updates based on input from trib drop down ###
   output$parameter<-renderUI({
-    selectizeInput("parameter_input",label = strong("Select Parameter:",style = "color:white;font-weight: bold;font-size:1.3em;"),
+    selectizeInput("parameter_input",label = strong("Select Parameter:",
+                                                    style = "color:white;font-weight: bold;font-size:1.3em;"),
                    choices = unique(datasub()$parameter),
                    selected = unique(datasub()$parameter[1]))
   })
@@ -293,9 +294,12 @@ server <- function(input, output,session) {
                                                  "<br>Value:",val,
                                                  "<br>Station:",locid)))+
       geom_point(aes(color = locid),size=1.3)+
+      guides(color = guide_legend(title = "Monitoring Station"))+
       labs(x="Date",y=input$parameter_input,
-           title = paste0("Trib:",input$trib_info,sep = ""))+
-      theme(legend.title = element_blank())
+           title = paste0(input$parameter_input," In ",input$trib_info," Tributary",collapse = ""))+
+      theme(plot.title = element_text(hjust = 0.5,face = "bold"),
+        legend.title = element_blank())+
+      theme_classic()
       
     ### Converts ggplot object into plotly object ###
     ggplotly(p,dynamicTicks = "x",tooltip = "text")#%>%
@@ -360,7 +364,7 @@ server <- function(input, output,session) {
        #          popup = ~paste("<h4> Station:</h4>",locid_x,sep = ""))%>%
       addLayersControl(
         overlayGroups = c("Rancocas","Blackscrosswicks","Pennsuaken","Raccoon",
-                          "WQ Stations"),
+                          "Monitoring Stations"),
         options = layersControlOptions(collapsed = FALSE))
   
   })
@@ -368,11 +372,16 @@ server <- function(input, output,session) {
 ### Make markers reactive to trib input ###
   wq_stations_reac<-reactive({
     req(input$trib_info)
+    req(input$parameter_input)
+    req(input$locid)
     del_trib_wq_stations%>%
       dplyr::filter(Trib == input$trib_info)
   })
 ### Updates map based on which trib is selected from drop down, then markers are added based on that ###
   observe({
+    req(input$trib_info)
+    req(input$parameter_input)
+    req(input$locid)
   leafletProxy("map2")%>%
       addMarkers(data = wq_stations_reac(),lng = ~LongDeg,lat = ~LatDeg, group = "WQ Stations",
                  popup = ~paste("<h4> Station:</h4>",locid,sep = ""),
@@ -382,6 +391,10 @@ server <- function(input, output,session) {
 ### Highlights polygon when Trib is clicked on drop down menu ###
 ############################################################################
   observeEvent(input$trib_info,{
+    
+    req(input$trib_info)
+    req(input$parameter_input)
+    req(input$locid)
     
     proxy<- leafletProxy("map2")
     
@@ -430,6 +443,20 @@ server <- function(input, output,session) {
         fitBounds(bbox[1], bbox[2], bbox[3], bbox[4])
     }
     
+  })
+  
+  ### Allows user to have map zoomed in when impaired HUC is clicked ###
+  observe({
+    req(input$trib_info)
+    req(input$parameter_input)
+    req(input$locid)
+    
+    click <- input$map2_shape_click
+    if(is.null(click))
+      return()
+    else
+      leafletProxy("map2")%>%
+      setView(lng = click$lng , lat = click$lat, zoom=10)
   })
 
 }
