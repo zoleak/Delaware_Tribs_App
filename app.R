@@ -168,7 +168,8 @@ ui <- navbarPage(theme = shinytheme("yeti"),
                           infoBox("Study Year Range:", "2008-2018",
                                   color = "light-blue",icon = icon("calendar"),
                                   fill = TRUE),
-                          downloadButton('downloadData','Download Data'),
+                          downloadBttn('downloadData','Download Data',
+                                       style = "jelly",color = "primary"),
                           DT::dataTableOutput("data")%>%
                             withSpinner(type = 5, color = "blue")),
                  tabPanel("Map",
@@ -285,14 +286,27 @@ server <- function(input, output,session) {
   })
 ###############################################################################
   ### Drop down menu updates based on input from trib drop down ###
-    output$locid<-renderUI({
-      selectizeInput("locid",label = strong("Select Monitoring Station:",
-                              style = "color:white;font-weight: bold;font-size:1.3em;"),
-                     multiple = TRUE,
-                     choices = unique(datasub2()$locid),
-                     selected = unique(datasub2()$locid[1]))
-    })
-   
+ #   output$locid<-renderUI({
+ #     selectizeInput("locid",label = strong("Select Monitoring Station:",
+ #                             style = "color:white;font-weight: bold;font-size:1.3em;"),
+ #                    multiple = TRUE,
+ #                    choices = unique(datasub2()$locid),
+ #                   selected = unique(datasub2()$locid))
+ #   })
+  output$locid<-renderUI({
+  pickerInput(
+    inputId = "locid", 
+    label = strong("Select Monitoring Station:",
+                    style = "color:white;font-weight: bold;font-size:1.3em;"), 
+    choices = unique(datasub2()$locid), 
+    options = list(
+      `actions-box` = TRUE, 
+      size = 10,
+      `selected-text-format` = "count > 3"
+    ), 
+    multiple = TRUE
+  )})
+  
     datasub3<-reactive({
       foo<-subset(datasub2(),locid == input$locid)
       return(foo)
