@@ -299,11 +299,9 @@ server <- function(input, output,session) {
     label = strong("Select Monitoring Station:",
                     style = "color:white;font-weight: bold;font-size:1.3em;"), 
     choices = unique(datasub2()$locid), 
+    selected = unique(datasub2()$locid),
     options = list(
-      `actions-box` = TRUE, 
-      size = 10,
-      `selected-text-format` = "count > 3"
-    ), 
+      `actions-box` = TRUE), 
     multiple = TRUE
   )})
   
