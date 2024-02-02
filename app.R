@@ -1,19 +1,6 @@
 ### App for Delaware Tribs Project ###
 ### Author: Kevin Zolea ###
 ###############################################################################
-### Download necessary packages ###
-### uncomment if packages aren't installed already###
-#if (!require(pacman)) {
-#  install.packages('pacman')
-#  
-#}
-#
-#pacman::p_load("ggplot2","tidyr","plyr","dplyr","readxl","shinycssloaders",
-#               "readr","cowplot","lubridate","scales","shinythemes","plotly",
-#               "stringr","data.table","rlang","purrr","rmapshaper",
-#               "shiny","DT","leaflet","sf","shinyWidgets",
-#               "rsconnect","shinyjs","htmltools","htmlwidgets","leaflet.extras","readr")
-###############################################################################
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -107,90 +94,89 @@ tribs_merged<-tribs_merged%>%
                         TRUE ~ HUC14)) 
 ###############################################################################
 ### Change projections to work with leaflet map ###
-#USGS_flow_stations<-st_transform(USGS_flow_stations, crs="+init=epsg:4326")
-NJ_huc14s<-st_transform(NJ_huc14s, crs="+init=epsg:4326")
-NJ_huc14s <- st_zm(NJ_huc14s, drop = T, what = "ZM")
-pennsuaken<-st_transform(pennsuaken, crs="+init=epsg:4326")
-rancocas<-st_transform(rancocas, crs="+init=epsg:4326")
-raccoon<-st_transform(raccoon, crs="+init=epsg:4326")
-blackscrosswicks<-st_transform(blackscrosswicks, crs="+init=epsg:4326")
-trib_waters<-st_transform(trib_waters,crs = "+init=epsg:4326")%>%
-  ms_simplify(.) #### ms_simplify makes shapefile read in faster when app is launched ###
-names(st_geometry(trib_waters)) = NULL### Needed to get polygons on map because ms_simplify gives names to geometry; which gives error ###
-tribs_merged<-st_transform(tribs_merged, crs="+init=epsg:4326")
-tribs_merged<-st_zm(tribs_merged, drop = T, what = "ZM")%>%
-  ms_simplify(.) #### ms_simplify makes shapefile read in faster when app is launched ###
-  names(st_geometry(tribs_merged)) = NULL### Needed to get polygons on map because ms_simplify gives names to geometry; which gives error ###
-tribs_merged<-st_transform(tribs_merged, crs="+init=epsg:4326")%>%
-  ms_simplify(.)
+# Function to transform, simplify, and clean shapefiles
+transform_simplify_clean <- function(shapefile) {
+  shapefile <- st_transform(shapefile, crs = "+init=epsg:4326")
+  shapefile <- st_zm(shapefile, drop = TRUE, what = "ZM")
+  shapefile <- ms_simplify(shapefile)
+  if ("geometry" %in% names(shapefile)) {
+    names(st_geometry(shapefile)) <- NULL
+  }
+  return(shapefile)
+}
+
+# Apply the transform_simplify_clean function to relevant shapefiles
+NJ_huc14s <- transform_simplify_clean(NJ_huc14s)
+pennsuaken <- transform_simplify_clean(pennsuaken)
+rancocas <- transform_simplify_clean(rancocas)
+raccoon <- transform_simplify_clean(raccoon)
+blackscrosswicks <- transform_simplify_clean(blackscrosswicks)
+trib_waters <- transform_simplify_clean(trib_waters)
+tribs_merged <- transform_simplify_clean(tribs_merged)
 ###############################################################################
 ### Define UI for application ###
-ui <- navbarPage(theme = shinytheme("yeti"),
-                 tags$b("NJDEP Delaware Tribs Project"),
-                 ###### Here : insert shinydashboard dependencies ######
-                 header = tagList(
-                   useShinydashboard()
-                 ),
-                 #######################################################
-                 tabPanel("About App",
-                          div(class= "outer",
-                              tags$head(
-                                #includeCSS("/Users/kevinzolea/Desktop/Temp_Impairments/www/styles.css")),
-                                includeCSS("www/styles.css")),
-                              h1(""),
-                              h2("Introduction:"),
-                              h3("The goal of this app is to aid in decision making for the Delaware Tributaries Project's 
-                                 modeling efforts. It will enable users to comprehend the current data we have and the 
-                                 monitoring stations from which the data is collected. This, in turn, will provide useful 
-                                 information for the project's modelers. The models developed in this project will provide 
-                                 useful loading information from upstream nontidal portions of the waterbodies into the 
-                                 tidal portions, as well as the ability to develop site-specific criteria if necessary."),
-                              br(),
-                              HTML('<center><img src="http://media.nj.com/centraljersey_impact/photo/9558763-large.jpg"></center>')),
-                          tags$head(tags$script(HTML('
-                                                     var customHref = function(tabName) {
-                                                     var dropdownList = document.getElementsByTagName("a");
-                                                     for (var i = 0; i < dropdownList.length; i++) {
-                                                     var link = dropdownList[i];
-                                                     if(link.getAttribute("data-value") == tabName) {
-                                                     link.click();
-                                                     };
-                                                     }
-                                                     };
-                                                     ')))),
-                 tabPanel("Data",
-                          infoBox("Total # of Monitoring Stations:",length(unique(del_trib_data$locid)),
-                                  color = "light-blue",icon = icon("map-marker"),
-                                  fill = TRUE),
-                          infoBox("Total # of Parameters:",length(unique(del_trib_data$parameter)),
-                                  color = "light-blue",icon = icon("water"),
-                                  fill = TRUE),
-                          infoBox("Study Year Range:", "2008-2018",
-                                  color = "light-blue",icon = icon("calendar"),
-                                  fill = TRUE),
-                          downloadBttn('downloadData','Download Data',
-                                       style = "jelly",color = "primary"),
-                          DT::dataTableOutput("data")%>%
-                            withSpinner(type = 5, color = "blue")),
-                 tabPanel("Map",
-                          h1("The map below depicts the locations of the water quality 
-                          stations used to collect data for this study, as well as the 
-                          four tributary study regions and their respective HUC 14s."),
-                          leafletOutput("del_trib_map", height = "95vh")%>%
-                            withSpinner(type = 5, color = "blue")),
-                 tabPanel("Plots",
-                          sidebarLayout(
-                            sidebarPanel(width = 3,
-                                         tags$style(".well {background-color:#222222;}"),
-                                         selectizeInput("trib_info",label = strong("Select Tributary:",
-                                                        style = "color:white;font-weight: bold;font-size:1.3em;"),
-                                                        choices =c("Pennsauken","Raccoon","Rancocas","BlacksCrosswicks"),
-                                                        selected = ""),
-                                         uiOutput("parameter"),
-                                         uiOutput("locid"),
-                                        HTML("<font color = 'white'>Author: Kevin Zolea\n (kevin.zolea@dep.nj.gov)</font>")),
-                            mainPanel(plotlyOutput("plot1")%>%withSpinner(type = 5, color = "blue"),
-                                      leafletOutput("map2")%>%withSpinner(type = 5, color = "blue")))))
+ui <- navbarPage(
+  theme = shinytheme("yeti"),
+  tags$b("NJDEP Delaware Tribs Project"),
+  header = tagList(useShinydashboard()),
+  tabPanel("About App",
+           div(class = "outer",
+               tags$head(
+                 includeCSS("www/styles.css")
+               ),
+               h1(""),
+               h2("Introduction:"),
+               h3("The goal of this app is to aid in decision-making for the Delaware Tributaries Project's modeling efforts. It will enable users to comprehend the current data we have and the monitoring stations from which the data is collected. This, in turn, will provide useful information for the project's modelers. The models developed in this project will provide useful loading information from upstream nontidal portions of the waterbodies into the tidal portions, as well as the ability to develop site-specific criteria if necessary."),
+               br(),
+               HTML('<center><img src="http://media.nj.com/centraljersey_impact/photo/9558763-large.jpg"></center>')
+           ),
+           tags$head(tags$script(HTML('
+      var customHref = function(tabName) {
+        var dropdownList = document.getElementsByTagName("a");
+        for (var i = 0; i < dropdownList.length; i++) {
+          var link = dropdownList[i];
+          if(link.getAttribute("data-value") == tabName) {
+            link.click();
+          };
+        }
+      };
+    ')))
+  ),
+  tabPanel("Data",
+           infoBox("Total # of Monitoring Stations:", length(unique(del_trib_data$locid)),
+                   color = "light-blue", icon = icon("map-marker"), fill = TRUE),
+           infoBox("Total # of Parameters:", length(unique(del_trib_data$parameter)),
+                   color = "light-blue", icon = icon("water"), fill = TRUE),
+           infoBox("Study Year Range:", "2008-2018",
+                   color = "light-blue", icon = icon("calendar"), fill = TRUE),
+           downloadBttn('downloadData', 'Download Data',
+                        style = "jelly", color = "primary"),
+           DT::dataTableOutput("data") %>% withSpinner(type = 5, color = "blue")
+  ),
+  tabPanel("Map",
+           h1("The map below depicts the locations of the water quality stations used to collect data for this study, as well as the four tributary study regions and their respective HUC 14s."),
+           leafletOutput("del_trib_map", height = "95vh") %>% withSpinner(type = 5, color = "blue")
+  ),
+  tabPanel("Plots",
+           sidebarLayout(
+             sidebarPanel(width = 3,
+                          tags$style(".well {background-color:#222222;}"),
+                          selectizeInput("trib_info", label = strong("Select Tributary:",
+                                                                     style = "color:white;font-weight: bold;font-size:1.3em;"),
+                                         choices = c("Pennsauken", "Raccoon", "Rancocas", "BlacksCrosswicks"),
+                                         selected = ""),
+                          uiOutput("parameter"),
+                          uiOutput("locid"),
+                          HTML("<font color = 'white'>Author: Kevin Zolea\n (kevin.zolea@dep.nj.gov)</font>")
+             ),
+             mainPanel(
+               plotlyOutput("plot1") %>% withSpinner(type = 5, color = "blue"),
+               leafletOutput("map2") %>% withSpinner(type = 5, color = "blue")
+             )
+           )
+  )
+)
+
 ###############################################################################
 ###############################################################################
 ### Creates server for app ###
@@ -205,10 +191,10 @@ server <- function(input, output,session) {
 ### Allows user to download data from data table page ###  
   output$downloadData<-downloadHandler(
     filename = function(){
-      paste("dataset-",Sys.Date(),".tsv",sep="")
+      paste("dataset-",Sys.Date(),".csv",sep="")
     },
     content = function(file){
-      write_tsv(del_trib_data,file)
+      write_csv(del_trib_data,file)
     })
 ###########################################################################  
 ### Creates interactive map of the 4 tribs with monitoring stations and flow stations ###
@@ -404,9 +390,7 @@ server <- function(input, output,session) {
   })
 ### Updates map based on which trib is selected from drop down, then markers are added based on that ###
   observe({
-    req(input$trib_info)
-    req(input$parameter_input)
-    req(input$locid)
+    req(input$trib_info, input$parameter_input, input$locid)
   leafletProxy("map2")%>%
       addMarkers(data = wq_stations_reac(),lng = ~LongDeg,lat = ~LatDeg, group = "WQ Stations",
                  popup = ~paste("<h4> Station:</h4>",locid,sep = ""),
